@@ -1831,4 +1831,12 @@ public final class APIConstants {
 
     public static final String SKIP_ROLES_BY_REGEX = "skipRolesByRegex";
 
+    /**
+     * Constants for the recommendation system
+     *
+     * */
+    public static final String API_RECOMMENDATION = "APIRecommendations";
+    public static final String RECOMMENDATION_ENDPOINT = API_RECOMMENDATION + ".url";
+    public static final String RECOMMENDATION_USERNAME = API_RECOMMENDATION + ".username";
+    public static final String RECOMMENDATION_PASSWORD = API_RECOMMENDATION + ".password";
 }
