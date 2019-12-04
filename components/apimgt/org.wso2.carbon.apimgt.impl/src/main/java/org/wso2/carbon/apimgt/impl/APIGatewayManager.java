@@ -40,6 +40,9 @@ import org.wso2.carbon.apimgt.impl.certificatemgt.exceptions.CertificateManageme
 import org.wso2.carbon.apimgt.impl.dao.CertificateMgtDAO;
 import org.wso2.carbon.apimgt.impl.dto.Environment;
 import org.wso2.carbon.apimgt.impl.internal.ServiceReferenceHolder;
+import org.wso2.carbon.apimgt.impl.recommendationmgt.RecommendationEnvironment;
+import org.wso2.carbon.apimgt.impl.recommendationmgt.RecommenderDetailsExtractor;
+import org.wso2.carbon.apimgt.impl.recommendationmgt.RecommenderEventPublisher;
 import org.wso2.carbon.apimgt.impl.template.APITemplateBuilder;
 import org.wso2.carbon.apimgt.impl.template.APITemplateBuilderImpl;
 import org.wso2.carbon.apimgt.impl.utils.APIGatewayAdminClient;
@@ -69,6 +72,7 @@ public class APIGatewayManager {
 	private static APIGatewayManager instance;
 
     private Map<String, Environment> environments;
+    private RecommendationEnvironment recommendationEnvironment;
 
 	private boolean debugEnabled = log.isDebugEnabled();
 
@@ -79,12 +83,13 @@ public class APIGatewayManager {
     private static final String PRODUCT_PREFIX = "prod";
     private static final String PRODUCT_VERSION = "1.0.0";
 
-	private APIGatewayManager() {
-		APIManagerConfiguration config = ServiceReferenceHolder.getInstance()
-		                                                       .getAPIManagerConfigurationService()
-		                                                       .getAPIManagerConfiguration();
-		environments = config.getApiGatewayEnvironments();
-	}
+    private APIGatewayManager() {
+        APIManagerConfiguration config = ServiceReferenceHolder.getInstance().getAPIManagerConfigurationService()
+                .getAPIManagerConfiguration();
+        environments = config.getApiGatewayEnvironments();
+        this.recommendationEnvironment = config.getApiRecommendationEnvironment();
+
+    }
 
 	public synchronized static APIGatewayManager getInstance() {
 		if (instance == null) {
@@ -320,6 +325,15 @@ public class APIGatewayManager {
             }
         }
         updateRemovedClientCertificates(api, tenantDomain);
+
+        // Extracting API details for the recommendation system
+        if (recommendationEnvironment != null) {
+            RecommenderEventPublisher extractor = new RecommenderDetailsExtractor(recommendationEnvironment, api,
+                    tenantDomain);
+            Thread recommendationThread = new Thread(extractor);
+            recommendationThread.start();
+        }
+
         return failedEnvironmentsMap;
     }
 
@@ -573,6 +587,15 @@ public class APIGatewayManager {
             }
             updateRemovedClientCertificates(api, tenantDomain);
         }
+
+        // Extracting API details for the recommendation system
+        if (recommendationEnvironment != null) {
+            RecommenderEventPublisher extractor = new RecommenderDetailsExtractor(recommendationEnvironment, api,
+                    tenantDomain);
+            Thread recommendationThread = new Thread(extractor);
+            recommendationThread.start();
+        }
+
         return failedEnvironmentsMap;
     }
 
